@@ -12,16 +12,16 @@ struct JsonBody {
     comunhao: String,
     primeiraLeitura: Leitura,
     segundaLeitura: Leitura,
-    salmo: Salmo,
+    salmo: Leitura,
     evangelho: Leitura
 }
-
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
 #[serde(untagged)]
 enum Leitura {
-    DadosLeitura(DadosLeitura),
-    Simples(String),
+    Leitura(DadosLeitura),
+    Salmos(Salmo),
+    Vazio(String),
 }
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
@@ -31,8 +31,7 @@ struct DadosLeitura {
     texto: String,
 }
 
-
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize, PartialEq)]
 struct Salmo {
     referencia: String,
     refrao: String,
@@ -41,23 +40,18 @@ struct Salmo {
 
 impl JsonBody {
     async fn request() ->  Result<JsonBody> {
-        get_requisicao().await
+        let url = "https://liturgiadiaria.site/";
+        let client = reqwest::Client::new();
+        let response: JsonBody = client
+            .get(url)
+            .header("content-type", "application/json")
+            .header("Accept", "application/json")
+            .send()
+            .await?
+            .json()
+            .await?; 
+        Ok(response)
     }
-}
-
-
-async fn get_requisicao() -> Result<JsonBody> {
-    let url = "https://liturgiadiaria.site/";
-    let client = reqwest::Client::new();
-    let response: JsonBody = client
-        .get(url)
-        .header("content-type", "application/json")
-        .header("Accept", "application/json")
-        .send()
-        .await?
-        .json()
-        .await?;
-    Ok(response)
 }
 
 fn print_liturgia_diaria(liturgia_diaria: JsonBody) {
@@ -65,30 +59,27 @@ fn print_liturgia_diaria(liturgia_diaria: JsonBody) {
     println!("Liturgia: {}", liturgia_diaria.liturgia);
     println!("Cor: {}", liturgia_diaria.cor);
     print_leitura("Primeira Leitura", &liturgia_diaria.primeiraLeitura);
-    print_salmo(&liturgia_diaria.salmo);
+    print_leitura("Salmo", &liturgia_diaria.salmo);
     print_leitura("Segunda Leitura", &liturgia_diaria.segundaLeitura);
     print_leitura("Evangelho", &liturgia_diaria.evangelho);
 }
 
 fn print_leitura(titulo: &str, leitura: &Leitura) {
     match leitura {
-        Leitura::DadosLeitura(dados) => {
+        Leitura::Leitura(dados) => {
             println!("{}", titulo);
             println!("Referência: {}", dados.referencia);
             println!("Título: {}", dados.titulo);
             println!("Texto: {}", dados.texto);
         }
-        Leitura::Simples(_texto) => {
-            println!("");
+        Leitura::Salmos(dados) => {
+            println!("{}", titulo);
+            println!("Referência: {}", dados.referencia);
+            println!("Refão: {}", dados.refrao);
+            println!("Texto: {}", dados.texto);
         }
+        Leitura::Vazio(_texto) => {}
     }
-}
-
-fn print_salmo(salmo: &Salmo) {
-    println!("Salmo:");
-    println!("Referência: {}", salmo.referencia);
-    println!("Refão: {}", salmo.refrao);
-    println!("Texto: {}", salmo.texto);
 }
 
 #[tokio::main]
