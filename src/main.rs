@@ -1,6 +1,5 @@
 use reqwest::Result;
 use serde::{Deserialize, Serialize};
-use tokio::runtime::Runtime;
 
 #[derive(Debug, Deserialize)]
 struct JsonBody {
@@ -41,9 +40,8 @@ struct Salmo {
 }
 
 impl JsonBody {
-    fn request() ->  Result<JsonBody> {
-        let rt = Runtime::new().unwrap();
-        rt.block_on(get_requisicao())
+    async fn request() ->  Result<JsonBody> {
+        get_requisicao().await
     }
 }
 
@@ -93,9 +91,11 @@ fn print_salmo(salmo: &Salmo) {
     println!("Texto: {}", salmo.texto);
 }
 
-fn main() {
-    match JsonBody::request() {
+#[tokio::main]
+async fn main() -> Result<()> {
+    match JsonBody::request().await {
         Ok(liturgia_diaria) => print_liturgia_diaria(liturgia_diaria),
         Err(e) => eprintln!("Erro ao realizar a requisição: {}", e),
     }
+    Ok(())
 }
