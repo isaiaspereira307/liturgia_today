@@ -1,0 +1,13 @@
+{
+	"name": "liturgia",
+	"dockerComposeFile": "docker-compose.yml",
+	"service": "liturgia",
+	"workspaceFolder": "/workspace",
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"terminal.integrated.shell.linux": "/bin/bash"
+			}
+		}
+	}
+}

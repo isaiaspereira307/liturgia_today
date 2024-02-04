@@ -1,0 +1,8 @@
+version: "3"
+
+services:
+  liturgia:
+    image: rust:buster
+    command: sleep infinity
+    volumes:
+      - ..:/workspace:cached
